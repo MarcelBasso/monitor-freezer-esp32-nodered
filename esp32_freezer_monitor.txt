@@ -1,0 +1,281 @@
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <ArduinoJson.h>
+#include "time.h" // Para funções de tempo (NTP)
+#include "sntp.h" // Para configurar SNTP
+
+// --- Configurações WiFi ---
+const char* ssid = "OsirMax_Gabriel"; // Substitua pelo nome da sua rede Wi-Fi
+const char* password = "Manzke4104"; // Substitua pela senha da sua rede Wi-Fi
+
+// --- Configurações NTP ---
+const char* ntpServer = "pool.ntp.org"; // Servidor NTP padrão
+const long gmtOffset_sec = -3 * 3600; // Offset de GMT em segundos (GMT-3 para o Brasil, ex: Pelotas)
+const int daylightOffset_sec = 0; // Offset para horário de verão (0 se não estiver em uso)
+
+// --- Detalhes do Broker MQTT ---
+const char* mqtt_server = "192.168.8.120"; // IP da sua máquina onde o Node-RED está rodando
+const int mqtt_port = 1883; // Porta do broker aedes no Node-RED
+
+// --- Tópicos MQTT ---
+const char* device_id = "freezer1"; // ID único deste dispositivo/freezer
+const char* power_status_topic = "laboratorio/freezer1/energia/status"; // Status LIGADO/DESLIGADO (1 ou 0)
+const char* last_seen_topic = "laboratorio/freezer1/energia/ultima_conexao"; // Heartbeat com o status (1 ou 0)
+
+// --- Last Will and Testament (LWT) ---
+// Esta mensagem será publicada pelo broker se o ESP32 se desconectar inesperadamente.
+// O status -1 será enviado neste caso.
+const char* lwt_topic = "laboratorio/freezer1/energia/status";
+const int lwt_qos = 1;
+const boolean lwt_retain = false;
+
+// --- Configurações do Sensor de Energia (AGORA USANDO TOUCH0/GPIO4) ---
+const int POWER_SENSE_PIN = 4; // GPIO4 é o pino TOUCH0 no ESP32 (T0)
+const int TOUCH_THRESHOLD = 30; // Valor inicial. Ajuste após testar as leituras.
+                                // Leitura ABAIXO deste valor = TOQUE DETECTADO
+                                // Leitura ACIMA/IGUAL a este valor = SEM TOQUE
+
+// Variáveis para a lógica de Debounce
+static bool currentTouchState;       // Estado atual do sensor (true se tocado, false se não tocado)
+static bool lastTouchState = false;  // Último estado lido do sensor (para detectar mudança)
+static unsigned long lastDebounceTime = 0; // Última vez que o estado do pino mudou
+const unsigned long debounceDelay = 50;    // Tempo de debounce em milissegundos
+
+// --- LED de Status MQTT ---
+#define MQTT_STATUS_LED 2 // Pino do LED (GPIO2 é o LED embutido em muitas placas ESP32)
+unsigned long previousMillisLED = 0;
+const long intervalLED = 500; // Intervalo para piscar o LED em milissegundos
+bool ledState = LOW;
+
+// --- Objetos de Cliente ---
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+// --- Protótipos de Funções ---
+void callback(char* topic, byte* payload, unsigned int length);
+void setup_wifi();
+void reconnect_mqtt();
+long long getUnixTimestampMs();
+
+// --- Função de Callback MQTT (não usada neste exemplo) ---
+void callback(char* topic, byte* payload, unsigned int length) {
+  // Se você adicionar funcionalidades de controle remoto, processaria as mensagens aqui.
+}
+
+// --- Função para configurar a conexão WiFi ---
+void setup_wifi() {
+  delay(10);
+  Serial.println("\nConectando ao WiFi...");
+  WiFi.begin(ssid, password);
+
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 40) {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nWiFi conectado!");
+    Serial.print("Endereço IP: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("\nFalha na conexão WiFi. Reiniciando...");
+    ESP.restart();
+  }
+}
+
+// --- Função para obter o Timestamp Unix em milissegundos ---
+long long getUnixTimestampMs() {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (long long)tv.tv_sec * 1000 + (long long)tv.tv_usec / 1000;
+}
+
+// --- Função para configurar e sincronizar NTP ---
+void setup_ntp() {
+  Serial.println("Configurando NTP...");
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
+  int attempts = 0;
+  time_t now = time(nullptr);
+  while (now < 100000 && attempts < 20) {
+    delay(500);
+    Serial.print(".");
+    now = time(nullptr);
+    attempts++;
+  }
+
+  if (now > 100000) {
+    Serial.println("\nTempo NTP sincronizado.");
+    struct tm timeinfo;
+    localtime_r(&now, &timeinfo);
+    Serial.print("Hora atual: ");
+    Serial.println(asctime(&timeinfo));
+  } else {
+    Serial.println("\nFalha na sincronização NTP. Continuando sem tempo preciso...");
+  }
+}
+
+// --- Função para reconectar ao broker MQTT ---
+void reconnect_mqtt() {
+  while (!client.connected()) {
+    Serial.print("Tentando conexão MQTT...");
+    String clientId = "ESP32_Freezer_";
+    clientId += String(random(0xffff), HEX);
+
+    StaticJsonDocument<200> lwtDoc;
+    lwtDoc["dispositivo"] = device_id;
+    lwtDoc["status"] = -1; // Status -1 para desconexão LWT
+    lwtDoc["razao"] = "sem_conexao_lwt";
+    lwtDoc["timestamp"] = getUnixTimestampMs();
+    char lwtJsonBuffer[200];
+    serializeJson(lwtDoc, lwtJsonBuffer);
+
+    if (client.connect(clientId.c_str(), lwt_topic, lwt_qos, lwt_retain, lwtJsonBuffer)) {
+      Serial.println("conectado ao broker MQTT.");
+      StaticJsonDocument<200> doc;
+      doc["dispositivo"] = device_id;
+      // LÓGICA INVERTIDA: Se currentTouchState é true (tocado), status é 0 (DESLIGADO). Se false (não tocado), status é 1 (LIGADO).
+      doc["status"] = currentTouchState ? 0 : 1;
+      doc["timestamp"] = getUnixTimestampMs();
+      
+      char jsonBuffer[200];
+      serializeJson(doc, jsonBuffer);
+      
+      client.publish(power_status_topic, jsonBuffer, true);
+      Serial.print("Status inicial publicado: ");
+      Serial.println(doc["status"].as<int>());
+    } else {
+      Serial.print("Falha na conexão MQTT, rc=");
+      Serial.print(client.state());
+      switch (client.state()) {
+        case MQTT_CONNECTION_TIMEOUT: Serial.println(" (MQTT_CONNECTION_TIMEOUT)"); break;
+        case MQTT_CONNECTION_LOST:    Serial.println(" (MQTT_CONNECTION_LOST)"); break;
+        case MQTT_CONNECT_FAILED:     Serial.println(" (MQTT_CONNECT_FAILED)"); break;
+        case MQTT_DISCONNECTED:       Serial.println(" (MQTT_DISCONNECTED)"); break;
+        case MQTT_CONNECT_BAD_PROTOCOL: Serial.println(" (MQTT_CONNECT_BAD_PROTOCOL)"); break;
+        case MQTT_CONNECT_BAD_CLIENT_ID: Serial.println(" (MQTT_CONNECT_BAD_CLIENT_ID)"); break;
+        case MQTT_CONNECT_UNAVAILABLE: Serial.println(" (MQTT_CONNECT_UNAVAILABLE)"); break;
+        case MQTT_CONNECT_BAD_CREDENTIALS: Serial.println(" (MQTT_CONNECT_BAD_CREDENTIALS)"); break;
+        case MQTT_CONNECT_UNAUTHORIZED: Serial.println(" (MQTT_CONNECT_UNAUTHORIZED)"); break;
+        default: Serial.println(" (Desconhecido)"); break;
+      }
+      Serial.println(" Tentando novamente em 5 segundos...");
+      delay(5000);
+    }
+  }
+}
+
+// --- Função de configuração (executada uma vez) ---
+void setup() {
+  Serial.begin(115200);
+
+  setup_wifi();
+  setup_ntp();
+
+  client.setServer(mqtt_server, mqtt_port);
+  client.setCallback(callback);
+
+  randomSeed(analogRead(0));
+
+  pinMode(MQTT_STATUS_LED, OUTPUT);
+  digitalWrite(MQTT_STATUS_LED, LOW);
+
+  Serial.println("\n--- Calibração Inicial do Sensor de Toque (GPIO4/TOUCH0) ---");
+  Serial.println("Certifique-se de que o sensor NÃO está sendo tocado durante a calibração.");
+  long sumTouch = 0;
+  for (int i = 0; i < 100; i++) {
+    sumTouch += touchRead(T0);
+    delay(10);
+  }
+  int avgTouch = sumTouch / 100;
+  Serial.print("Leitura média inicial do Touch (sem toque): ");
+  Serial.println(avgTouch);
+  Serial.print("Threshold atual configurado no código: ");
+  Serial.println(TOUCH_THRESHOLD);
+  Serial.println("OBS: Para a lógica atual (SEM TOQUE = LIGADO, COM TOQUE = DESLIGADO):");
+  Serial.println(" - Se o sensor NÃO estiver tocado, a leitura deve ser MAIOR ou IGUAL ao TOUCH_THRESHOLD.");
+  Serial.println(" - Se o sensor ESTIVER tocado, a leitura deve ser MENOR que o TOUCH_THRESHOLD.");
+  Serial.println("Ajuste 'TOUCH_THRESHOLD' conforme necessário.");
+  Serial.println("-----------------------------------------------------------\n");
+
+  // Define o estado inicial do sensor de toque (true se tocado, false se não tocado)
+  currentTouchState = (touchRead(T0) < TOUCH_THRESHOLD);
+  lastTouchState = currentTouchState;
+}
+
+// --- Função de loop (executada repetidamente) ---
+void loop() {
+  if (!client.connected()) {
+    reconnect_mqtt();
+  }
+  client.loop();
+
+  unsigned long currentMillis = millis();
+  if (client.connected()) {
+    if (currentMillis - previousMillisLED >= intervalLED) {
+      previousMillisLED = currentMillis;
+      ledState = !ledState;
+      digitalWrite(MQTT_STATUS_LED, ledState);
+    }
+  } else {
+    if (ledState == HIGH) {
+        ledState = LOW;
+        digitalWrite(MQTT_STATUS_LED, LOW);
+    }
+  }
+
+  int touchValue = touchRead(T0);
+  // reading é true se tocado, false se não tocado
+  bool reading = (touchValue < TOUCH_THRESHOLD); 
+
+  if (reading != lastTouchState) {
+    lastDebounceTime = millis();
+  }
+
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    if (reading != currentTouchState) {
+      currentTouchState = reading; // currentTouchState agora reflete o estado atual do toque
+
+      StaticJsonDocument<200> doc;
+      doc["dispositivo"] = device_id;
+      // LÓGICA INVERTIDA: Se currentTouchState é true (tocado), status é 0 (DESLIGADO). Se false (não tocado), status é 1 (LIGADO).
+      doc["status"] = currentTouchState ? 0 : 1;
+      doc["timestamp"] = getUnixTimestampMs();
+      
+      char jsonBuffer[200];
+      serializeJson(doc, jsonBuffer);
+
+      Serial.print("SENSOR TOQUE: ");
+      Serial.print(currentTouchState ? "TOCADO" : "NÃO TOCADO");
+      Serial.print(" -> STATUS PUBLICADO: ");
+      Serial.println(doc["status"].as<int>());
+
+      if (client.publish(power_status_topic, jsonBuffer, true)) {
+        Serial.println("Status da energia publicado no broker MQTT.");
+      } else {
+        Serial.println("Falha ao publicar status da energia.");
+      }
+    }
+  }
+  lastTouchState = reading;
+
+  static unsigned long lastPublishTime = 0;
+  if (millis() - lastPublishTime > 60000) { // A cada 60 segundos
+    StaticJsonDocument<100> tsDoc;
+    tsDoc["dispositivo"] = device_id;
+    // LÓGICA INVERTIDA para o heartbeat também
+    tsDoc["status"] = currentTouchState ? 0 : 1;
+    
+    char tsJsonBuffer[100];
+    serializeJson(tsDoc, tsJsonBuffer);
+
+    client.publish(last_seen_topic, tsJsonBuffer, true);
+    Serial.print("Heartbeat com status publicado: ");
+    Serial.println(tsDoc["status"].as<int>());
+    lastPublishTime = millis();
+  }
+
+  delay(100);
+}

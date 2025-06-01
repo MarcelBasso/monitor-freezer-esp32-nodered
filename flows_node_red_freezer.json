@@ -1,0 +1,681 @@
+[
+    {
+        "id": "e2d098e7279c6d32",
+        "type": "tab",
+        "label": "Monitoramento de Freezer - Energia",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "2511fa3937d195f1",
+        "type": "tab",
+        "label": "Dashboard",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "437cde6d7a6565c5",
+        "type": "tab",
+        "label": "Fluxo Freezer Monitor",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "43679719ebd7f26c",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-light",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "darkTheme": {
+                "default": "#097479",
+                "baseColor": "#097479",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": false
+            },
+            "customTheme": {
+                "name": "Untitled Theme 1",
+                "default": "#4B7930",
+                "baseColor": "#4B7930",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+            },
+            "themeState": {
+                "base-color": {
+                    "default": "#0094CE",
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-titlebar-backgroundColor": {
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-backgroundColor": {
+                    "value": "#fafafa",
+                    "edited": false
+                },
+                "page-sidebar-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-textColor": {
+                    "value": "#1bbfff",
+                    "edited": false
+                },
+                "group-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "widget-textColor": {
+                    "value": "#111111",
+                    "edited": false
+                },
+                "widget-backgroundColor": {
+                    "value": "#0094ce",
+                    "edited": false
+                },
+                "widget-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "base-font": {
+                    "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+                }
+            },
+            "angularTheme": {
+                "primary": "indigo",
+                "accents": "blue",
+                "warn": "red",
+                "background": "grey",
+                "palette": "light"
+            }
+        },
+        "site": {
+            "name": "Node-RED Dashboard",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "false",
+            "allowTempTheme": "true",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "bf8c20188686f376",
+        "type": "ui_tab",
+        "name": "Monitoramento",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "e18663b65288b88d",
+        "type": "ui_group",
+        "name": "Freezer - Energia",
+        "tab": "bf8c20188686f376",
+        "order": 1,
+        "disp": true,
+        "width": "10",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "3b23b3f942fb8316",
+        "type": "mqtt-broker",
+        "name": "Meu Broker Aedes Local",
+        "broker": "localhost",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "keepalive": "60"
+    },
+    {
+        "id": "e4a2b1c3d4e5f6g7h8i9j0k1l2m3n4o5",
+        "type": "aedes broker",
+        "z": "e2d098e7279c6d32",
+        "name": "Meu Broker MQTT Local (Aedes)",
+        "mqtt_port": "1883",
+        "mqtt_ws_bind": "port",
+        "mqtt_ws_port": "",
+        "mqtt_ws_path": "",
+        "cert": "",
+        "key": "",
+        "certname": "",
+        "keyname": "",
+        "persistence_bind": "memory",
+        "dburl": "",
+        "usetls": false,
+        "x": 170,
+        "y": 60,
+        "wires": [
+            [
+                "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o6"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o6",
+        "type": "debug",
+        "z": "e2d098e7279c6d32",
+        "name": "Eventos do Broker Aedes",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 450,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "4020c91ee0a76ef6",
+        "type": "mqtt in",
+        "z": "2511fa3937d195f1",
+        "name": "Status do Freezer (Mudança)",
+        "topic": "laboratorio/freezer1/energia/status",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "3b23b3f942fb8316",
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 140,
+        "y": 140,
+        "wires": [
+            [
+                "618a8b13286f0302"
+            ]
+        ]
+    },
+    {
+        "id": "b1c2d3e4f5g6h7i8j9k0l1m2n3o7p8",
+        "type": "mqtt in",
+        "z": "2511fa3937d195f1",
+        "name": "Heartbeat do Freezer",
+        "topic": "laboratorio/freezer1/energia/ultima_conexao",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "3b23b3f942fb8316",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 160,
+        "y": 200,
+        "wires": [
+            [
+                "618a8b13286f0302"
+            ]
+        ]
+    },
+    {
+        "id": "618a8b13286f0302",
+        "type": "json",
+        "z": "2511fa3937d195f1",
+        "name": "Parse JSON",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 350,
+        "y": 170,
+        "wires": [
+            [
+                "89a697793d5089f2",
+                "2f890f6b5791c539"
+            ]
+        ]
+    },
+    {
+        "id": "89a697793d5089f2",
+        "type": "change",
+        "z": "2511fa3937d195f1",
+        "name": "Preparar para Gráfico (Status Numérico)",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.status",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "Status do Freezer",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 620,
+        "y": 120,
+        "wires": [
+            [
+                "c1d2e3f4g5h6i7j8k9l0m1n2o3p4q9"
+            ]
+        ]
+    },
+    {
+        "id": "c1d2e3f4g5h6i7j8k9l0m1n2o3p4q9",
+        "type": "function",
+        "z": "2511fa3937d195f1",
+        "name": "Configurar Eixo Y do Gráfico",
+        "func": "msg.ui_chart_options = {\n    scales: {\n        yAxes: [{\n            ticks: {\n                callback: function(value, index, values) {\n                    if (value === 1) return 'LIGADO';\n                    if (value === 0) return 'DESLIGADO';\n                    if (value === -1) return 'OFFLINE';\n                    return ''; // Esconde outros ticks\n                }\n            }\n        }]\n    }\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 840,
+        "y": 120,
+        "wires": [
+            [
+                "6814b74542d93e18"
+            ]
+        ]
+    },
+    {
+        "id": "6814b74542d93e18",
+        "type": "ui_chart",
+        "z": "2511fa3937d195f1",
+        "name": "Gráfico de Status do Freezer",
+        "group": "e18663b65288b88d",
+        "order": 1,
+        "width": "0",
+        "height": "0",
+        "label": "Status de Energia do Freezer",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm",
+        "interpolate": "linear",
+        "nodata": "Aguardando dados...",
+        "dot": true,
+        "ymin": "-1",
+        "ymax": "1",
+        "removeOlder": "24",
+        "removeOlderPoints": "100",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1080,
+        "y": 120,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2f890f6b5791c539",
+        "type": "change",
+        "z": "2511fa3937d195f1",
+        "name": "Preparar para Texto (Status Legível)",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.status = 1 ? \"LIGADO\" : (payload.status = 0 ? \"DESLIGADO\" : \"DESCONECTADO\")",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "ui_colour",
+                "pt": "msg",
+                "to": "payload.status = 1 ? \"green\" : (payload.status = 0 ? \"red\" : \"orange\")",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 610,
+        "y": 220,
+        "wires": [
+            [
+                "7649d21c4314d339"
+            ]
+        ]
+    },
+    {
+        "id": "7649d21c4314d339",
+        "type": "ui_text",
+        "z": "2511fa3937d195f1",
+        "group": "e18663b65288b88d",
+        "order": 2,
+        "width": 4,
+        "height": 1,
+        "name": "Status Atual do Freezer",
+        "label": "Status:",
+        "format": "<font color=\"{{msg.ui_colour}}\"><b>{{msg.payload}}</b></font>",
+        "layout": "row-spread",
+        "fontSize": 20,
+        "color": "",
+        "x": 870,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "cbbc28594d821271",
+        "type": "mqtt in",
+        "z": "437cde6d7a6565c5",
+        "name": "Status Freezer (MQTT)",
+        "topic": "laboratorio/freezer1/energia/status",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "3b23b3f942fb8316",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 160,
+        "y": 200,
+        "wires": [
+            [
+                "f1cd1f47f09facf7"
+            ]
+        ]
+    },
+    {
+        "id": "f1cd1f47f09facf7",
+        "type": "json",
+        "z": "437cde6d7a6565c5",
+        "name": "Parse JSON",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 360,
+        "y": 200,
+        "wires": [
+            [
+                "aa2898a7882fb024"
+            ]
+        ]
+    },
+    {
+        "id": "aa2898a7882fb024",
+        "type": "change",
+        "z": "437cde6d7a6565c5",
+        "name": "Organizar Dados & Contexto",
+        "rules": [
+            {
+                "t": "set",
+                "p": "status_value",
+                "pt": "msg",
+                "to": "payload.status",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "device_id",
+                "pt": "msg",
+                "to": "payload.dispositivo",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "last_device_id",
+                "pt": "flow",
+                "to": "payload.dispositivo",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "last_status_payload",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg",
+                "dc": true
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 580,
+        "y": 200,
+        "wires": [
+            [
+                "98d48515ae2f182d",
+                "28b59b1de93a04fb"
+            ]
+        ]
+    },
+    {
+        "id": "98d48515ae2f182d",
+        "type": "rbe",
+        "z": "437cde6d7a6565c5",
+        "name": "Filtrar Mudança de Status (p/ Desligado)",
+        "func": "rbe",
+        "gap": "",
+        "start": "",
+        "inout": "out",
+        "septopics": false,
+        "property": "status_value",
+        "x": 850,
+        "y": 160,
+        "wires": [
+            [
+                "860b327bead621c3"
+            ]
+        ]
+    },
+    {
+        "id": "860b327bead621c3",
+        "type": "switch",
+        "z": "437cde6d7a6565c5",
+        "name": "Status é 0 (Desligado)?",
+        "property": "status_value",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1110,
+        "y": 160,
+        "wires": [
+            [
+                "8bdf1ea8f7efa981"
+            ]
+        ]
+    },
+    {
+        "id": "8bdf1ea8f7efa981",
+        "type": "change",
+        "z": "437cde6d7a6565c5",
+        "name": "Assunto: Freezer Desligado",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "Alerta Freezer: {{device_id}} - DESLIGADO",
+                "tot": "mustache"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1360,
+        "y": 160,
+        "wires": [
+            [
+                "9b7f31a2d803c1a8"
+            ]
+        ]
+    },
+    {
+        "id": "9b7f31a2d803c1a8",
+        "type": "template",
+        "z": "437cde6d7a6565c5",
+        "name": "Email Txt: Freezer Desligado",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "Alerta: O freezer {{device_id}} foi DESLIGADO!\n\nStatus: {{status_value}}\n\nPor favor, verifique.",
+        "output": "str",
+        "x": 1610,
+        "y": 160,
+        "wires": [
+            [
+                "84b81d2dd06f7683"
+            ]
+        ]
+    },
+    {
+        "id": "84b81d2dd06f7683",
+        "type": "e-mail",
+        "z": "437cde6d7a6565c5",
+        "server": "smtp.gmail.com",
+        "port": "465",
+        "authtype": "BASIC",
+        "saslformat": false,
+        "token": "oauth2Response.access_token",
+        "secure": true,
+        "tls": true,
+        "name": "marcel.basso@ucpel.edu.br",
+        "dname": "Notificação Freezer",
+        "x": 1870,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "28b59b1de93a04fb",
+        "type": "trigger",
+        "z": "437cde6d7a6565c5",
+        "name": "Watchdog 1h Sem Dados",
+        "op1": "",
+        "op2": "timeout",
+        "op1type": "nul",
+        "op2type": "str",
+        "duration": "1",
+        "extend": "false",
+        "overrideDelay": "false",
+        "units": "hr",
+        "reset": "",
+        "bytopic": "all",
+        "topic": "topic",
+        "outputs": 1,
+        "x": 870,
+        "y": 260,
+        "wires": [
+            [
+                "154decf6b3e5e224"
+            ]
+        ]
+    },
+    {
+        "id": "154decf6b3e5e224",
+        "type": "change",
+        "z": "437cde6d7a6565c5",
+        "name": "Dados Email Sem Comunicação",
+        "rules": [
+            {
+                "t": "set",
+                "p": "device_id",
+                "pt": "msg",
+                "to": "last_device_id",
+                "tot": "flow"
+            },
+            {
+                "t": "set",
+                "p": "last_payload_details",
+                "pt": "msg",
+                "to": "last_status_payload",
+                "tot": "flow"
+            },
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "Alerta Freezer: {{device_id}} - SEM COMUNICAÇÃO por 1h",
+                "tot": "mustache"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1180,
+        "y": 260,
+        "wires": [
+            [
+                "05d2f6e68f28701c"
+            ]
+        ]
+    },
+    {
+        "id": "05d2f6e68f28701c",
+        "type": "template",
+        "z": "437cde6d7a6565c5",
+        "name": "Email Txt: Sem Comunicação",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "template": "Alerta: O freezer {{device_id}} parece estar SEM COMUNICAÇÃO.\n\nNenhum status foi recebido do tópico 'laboratorio/freezer1/energia/status' por mais de 1 hora.\n{{#last_payload_details}}\nÚltimo status conhecido antes do silêncio: {{status}} (Dispositivo: {{dispositivo}})\n{{/last_payload_details}}\n\nVerifique a conexão do dispositivo e o broker MQTT.",
+        "output": "str",
+        "x": 1470,
+        "y": 260,
+        "wires": [
+            [
+                "84b81d2dd06f7683"
+            ]
+        ]
+    }
+]
